@@ -126,16 +126,25 @@
   }
 
   // Thumbnail: the FINISHED picture in full colour — the photo on the box lid.
+  // Rendered via ImageData at native size then scaled (fast + smooth), instead
+  // of tens of thousands of fillRect calls.
   function drawThumb(cv, p) {
-    const c = cv.getContext('2d');
-    const s = Math.min(cv.width / p.w, cv.height / p.h);
-    const ox = (cv.width - s * p.w) / 2, oy = (cv.height - s * p.h) / 2;
-    c.clearRect(0, 0, cv.width, cv.height);
-    for (let y = 0; y < p.h; y++) for (let x = 0; x < p.w; x++) {
-      const idx = p.grid[y][x]; if (!idx) continue;
-      c.fillStyle = p.palette[idx - 1];
-      c.fillRect(ox + x * s, oy + y * s, s + 0.7, s + 0.7);
+    const w = p.w, h = p.h;
+    const off = document.createElement('canvas'); off.width = w; off.height = h;
+    const octx = off.getContext('2d');
+    const img = octx.createImageData(w, h), d = img.data;
+    const rgb = p.palette.map((hex) => { const c = hex.replace('#', ''); return [parseInt(c.substr(0, 2), 16), parseInt(c.substr(2, 2), 16), parseInt(c.substr(4, 2), 16)]; });
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const idx = p.grid[y][x], o = (y * w + x) * 4;
+      if (!idx) { d[o + 3] = 0; continue; }
+      const c = rgb[idx - 1]; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
     }
+    octx.putImageData(img, 0, 0);
+    const c = cv.getContext('2d');
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
+    const s = Math.min(cv.width / w, cv.height / h);
+    c.drawImage(off, (cv.width - s * w) / 2, (cv.height - s * h) / 2, s * w, s * h);
   }
   function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m])); }
 
@@ -453,7 +462,7 @@
     }
     if (downPt && !moved && Math.hypot(e.clientX - downPt.x, e.clientY - downPt.y) > TAP_SLOP) moved = true;
     if (gesture === 'pan' && panLast) { State.view.ox += e.clientX - panLast.x; State.view.oy += e.clientY - panLast.y; panLast = { x: e.clientX, y: e.clientY }; clampView(); requestRender(); }
-    else if (gesture === 'paint') paintStroke(e.clientX, e.clientY);
+    else if (gesture === 'paint' && moved) paintStroke(e.clientX, e.clientY);  // only brush once it's a real drag
   }
   function onUp(e) {
     const wasGesture = gesture, p = pointers.get(e.pointerId);
@@ -471,7 +480,13 @@
   canvas.addEventListener('pointerup', onUp);
   canvas.addEventListener('pointercancel', onUp);
   canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-  canvas.addEventListener('wheel', (e) => { e.preventDefault(); animateZoom(State.view.scale * (e.deltaY < 0 ? 1.25 : 1 / 1.25), e.clientX, e.clientY); }, { passive: false });
+  canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    // direct zoom + one batched render — no animation loop (avoids pile-ups/lag)
+    const step = Math.exp(-e.deltaY * 0.0016);   // smooth, proportional to scroll
+    zoomAt(e.clientX, e.clientY, step);
+    clampView(); requestRender();
+  }, { passive: false });
   let lastTapTime = 0, lastTapPt = null;
   canvas.addEventListener('pointerup', (e) => {
     const now = performance.now();
