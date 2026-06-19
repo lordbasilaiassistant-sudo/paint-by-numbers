@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/sitemap.xml

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>Paint by Numbers — Free Color by Number Game (No Ads)</title>
+  <meta name="description" content="A free, relaxing paint-by-numbers coloring game. Fill numbered cells to reveal beautiful pictures, paint your own photos, and browse free images. No ads, no purchases — installable to your phone." />
+  <meta name="keywords" content="paint by numbers, color by number, coloring game, free coloring app, pixel art coloring, paint by number online, relaxing game, no ads coloring" />
+  <meta name="theme-color" content="#5b6cff" />
+  <link rel="canonical" href="https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/" />
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Paint by Numbers" />
+  <meta property="og:title" content="Paint by Numbers — Free Color by Number Game" />
+  <meta property="og:description" content="Relaxing free color-by-number game. Paint beautiful pictures or your own photos. No ads, installable to your phone." />
+  <meta property="og:url" content="https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/" />
+  <meta property="og:image" content="https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Paint by Numbers — Free Color by Number Game" />
+  <meta name="twitter:description" content="Relaxing free color-by-number game. Paint beautiful pictures or your own photos. No ads." />
+  <meta name="twitter:image" content="https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/og-image.png" />
+
+  <!-- Structured data: helps search engines understand this is a free web game -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Paint by Numbers",
+    "description": "A free, relaxing paint-by-numbers coloring game. Fill numbered cells to reveal beautiful pictures and paint your own photos. No ads, no purchases.",
+    "url": "https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/",
+    "image": "https://lordbasilaiassistant-sudo.github.io/paint-by-numbers/og-image.png",
+    "genre": ["Casual", "Puzzle", "Coloring"],
+    "playMode": "SinglePlayer",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any (web browser)",
+    "browserRequirements": "Requires JavaScript",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Paint" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ===================== Gallery ===================== -->
+  <section id="gallery-screen" class="screen active">
+    <header class="top">
+      <div class="top-row">
+        <h1>🎨 Paint by Numbers</h1>
+      </div>
+      <p id="gallery-sub" class="sub">Pick a picture</p>
+      <div class="top-actions">
+        <button id="upload-btn" class="action-btn">📷 Your photo</button>
+        <button id="browse-btn" class="action-btn">🖼️ Free images</button>
+      </div>
+    </header>
+    <div id="gallery" class="gallery"></div>
+    <footer class="foot">
+      <span>Free &amp; offline · no ads · no purchases</span>
+      <button id="install-btn" class="install-btn" hidden>⤓ Install app</button>
+    </footer>
+  </section>
+
+  <!-- ===================== Play ===================== -->
+  <section id="play-screen" class="screen">
+    <header class="play-top">
+      <button id="back-btn" class="icon-btn" aria-label="Back to gallery">‹</button>
+      <span id="play-title" class="play-title">Paint</span>
+      <button id="mode-btn" class="icon-btn" aria-label="Toggle brush / move">🖌️</button>
+      <button id="fit-btn" class="icon-btn" aria-label="Fit to screen">⤢</button>
+      <button id="reset-btn" class="icon-btn" aria-label="Reset picture">↺</button>
+    </header>
+
+    <div class="progress">
+      <div class="progress-track"><i id="progress-fill"></i></div>
+      <span id="progress-label">0%</span>
+    </div>
+
+    <div class="board-wrap">
+      <canvas id="board"></canvas>
+      <div id="toast" class="toast"></div>
+    </div>
+
+    <div id="palette" class="palette"></div>
+  </section>
+
+  <!-- ===================== Completion overlay ===================== -->
+  <div id="done-overlay" class="overlay">
+    <div id="confetti" class="confetti"></div>
+    <div class="done-card">
+      <h2>Finished! 🎉</h2>
+      <canvas id="done-art" width="260" height="260" class="done-art"></canvas>
+      <p id="done-name" class="done-name"></p>
+      <button id="done-close" class="primary">Back to gallery</button>
+    </div>
+  </div>
+
+  <!-- ===================== Free-image browser ===================== -->
+  <div id="browse-modal" class="overlay">
+    <div class="browse-card">
+      <div class="browse-head">
+        <h2>Free images</h2>
+        <button id="browse-close" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="browse-search">
+        <input id="browse-input" type="text" placeholder="Search e.g. flowers, beach, cats…" />
+        <button id="browse-go" class="primary small">Search</button>
+      </div>
+      <div class="chips">
+        <button class="chip" data-q="flowers">🌸 Flowers</button>
+        <button class="chip" data-q="cute animals">🐾 Animals</button>
+        <button class="chip" data-q="landscape nature">🏞️ Nature</button>
+        <button class="chip" data-q="galaxy space">🌌 Space</button>
+        <button class="chip" data-q="dessert food">🍰 Food</button>
+        <button class="chip" data-q="butterfly">🦋 Butterfly</button>
+      </div>
+      <div id="browse-grid" class="browse-grid"></div>
+      <p class="browse-note">Images are CC0 (public domain) from Openverse.</p>
+    </div>
+  </div>
+
+  <!-- ===================== Loading ===================== -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p class="loading-text">Working…</p>
+  </div>
+
+  <input id="upload-input" type="file" accept="image/*" hidden />
+
+  <script src="js/convert.js"></script>
+  <script src="js/puzzle-data.js"></script>
+  <script src="js/puzzles.js"></script>
+  <script src="js/game.js"></script>
+  <script>
+    // Install prompt (Android/desktop). iOS uses Share → Add to Home Screen.
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('install-btn');
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.hidden = false; });
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; installBtn.hidden = true;
+    });
+    window.addEventListener('appinstalled', () => { installBtn.hidden = true; });
+  </script>
+</body>
+</html>
