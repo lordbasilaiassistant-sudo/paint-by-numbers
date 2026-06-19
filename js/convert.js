@@ -257,7 +257,7 @@ window.PBN = window.PBN || {};
     // Numbered units are BOUNDED TILES, not whole connected blobs — so a large
     // colour area is many cells to fill one-by-one (real paint-by-number), not
     // a single bucket-fill. Each (tile, colour) pair becomes one numbered cell.
-    const bs = opts.blockSize || 4;
+    const bs = opts.blockSize || 3;
     const bw = Math.ceil(w / bs);
     let maxC = 0; for (let i = 0; i < N; i++) if (col[i] > maxC) maxC = col[i];
     const stride = maxC + 1;

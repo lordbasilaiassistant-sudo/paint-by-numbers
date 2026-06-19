@@ -52,7 +52,7 @@ for y in range(H):
 # showcase a few finished puzzles on the right
 try:
     puz = load_puzzles()
-    picks = [p for p in puz if p["name"] in ("Sunset Beach", "Rose", "Galaxy", "Sunflower")]
+    picks = [p for p in puz if p["name"] in ("Rose", "Tulips", "Autumn", "Hibiscus")]
     picks = (picks + puz)[:4]
     box = 250; gap = 18; x0 = W - (box * 2 + gap) - 50; y0 = (H - (box * 2 + gap)) // 2
     for n, p in enumerate(picks):
