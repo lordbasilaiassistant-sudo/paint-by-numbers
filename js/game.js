@@ -278,23 +278,32 @@
     const x0 = Math.max(0, Math.floor(-v.ox / cs)), x1 = Math.min(p.w, Math.ceil((vw - v.ox) / cs));
     const y0 = Math.max(0, Math.floor(-v.oy / cs)), y1 = Math.min(p.h, Math.ceil((vh - v.oy) / cs));
     const selHex = p.palette[State.selected - 1];
-    const selTint = mix(selHex, 255, 0.72), selStroke = mix(selHex, 255, 0.4);
+    const selTint = mix(selHex, 255, 0.72);
+    // boundary lines are drawn only between DIFFERENT numbered regions, so each
+    // tile is outlined as its own unit (no internal lines, no merged blobs).
+    // Skipped when zoomed out (drawGrid false) so the finished art looks smooth.
+    const bound = drawGrid ? new Path2D() : null;       // edges to other regions
+    const selBound = drawGrid ? new Path2D() : null;     // edges of selected tiles
 
     for (let y = y0; y < y1; y++) {
       for (let x = x0; x < x1; x++) {
         const i = y * p.w + x, rid = p.region[i]; if (rid < 0) continue;
         const px = v.ox + x * cs, py = v.oy + y * cs;
-        if (State.filledR[rid]) {
-          ctx.fillStyle = p.palette[p.regionColor[rid] - 1];
-          ctx.fillRect(px, py, cs + 0.7, cs + 0.7);
-        } else {
-          const isSel = p.regionColor[rid] === State.selected;
-          ctx.fillStyle = isSel ? selTint : '#ffffff';
-          ctx.fillRect(px, py, cs, cs);
-          if (drawGrid) { ctx.strokeStyle = isSel ? selStroke : '#e6eaef'; ctx.strokeRect(px + 0.5, py + 0.5, cs - 1, cs - 1); }
+        const isFilled = State.filledR[rid];
+        const isSel = !isFilled && p.regionColor[rid] === State.selected;
+        ctx.fillStyle = isFilled ? p.palette[p.regionColor[rid] - 1] : (isSel ? selTint : '#ffffff');
+        ctx.fillRect(px, py, cs + 0.6, cs + 0.6);
+        if (drawGrid) {
+          const rd = (x + 1 >= p.w) || p.region[i + 1] !== rid;
+          const dn = (y + 1 >= p.h) || p.region[i + p.w] !== rid;
+          const path = isSel ? selBound : bound;
+          if (rd) { path.moveTo(px + cs, py); path.lineTo(px + cs, py + cs); }
+          if (dn) { path.moveTo(px, py + cs); path.lineTo(px + cs, py + cs); }
         }
       }
     }
+    if (bound) { ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(70,72,84,0.38)'; ctx.stroke(bound); }
+    if (selBound) { ctx.lineWidth = 1.5; ctx.strokeStyle = mix(selHex, 0, 0.18); ctx.stroke(selBound); }
 
     // numbers: one per region, drawn at its centroid when it's big enough
     if (showNums) {
