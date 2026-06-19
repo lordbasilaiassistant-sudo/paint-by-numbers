@@ -274,9 +274,13 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     const vw = canvas.clientWidth, vh = canvas.clientHeight;
-    const drawGrid = cs >= 5, showNums = cs >= MIN_NUM_PX;
     const x0 = Math.max(0, Math.floor(-v.ox / cs)), x1 = Math.min(p.w, Math.ceil((vw - v.ox) / cs));
     const y0 = Math.max(0, Math.floor(-v.oy / cs)), y1 = Math.min(p.h, Math.ceil((vh - v.oy) / cs));
+    const visCount = Math.max(0, x1 - x0) * Math.max(0, y1 - y0);
+    // grid/numbers only when zoomed in enough that few cells are on screen —
+    // keeps the dense single-cell grid fast, and the zoomed-out view smooth.
+    const drawGrid = cs >= 6 && visCount <= 12000;
+    const showNums = cs >= MIN_NUM_PX && visCount <= 1400;
     const selHex = p.palette[State.selected - 1];
     const selTint = mix(selHex, 255, 0.72);
     // boundary lines are drawn only between DIFFERENT numbered regions, so each
@@ -305,18 +309,19 @@
     if (bound) { ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(70,72,84,0.38)'; ctx.stroke(bound); }
     if (selBound) { ctx.lineWidth = 1.5; ctx.strokeStyle = mix(selHex, 0, 0.18); ctx.stroke(selBound); }
 
-    // numbers: one per region, drawn at its centroid when it's big enough
+    // numbers: one per region at its centroid, iterating only visible cells
     if (showNums) {
-      ctx.font = '600 ' + Math.min(Math.floor(cs * 0.62), 22) + 'px system-ui, sans-serif';
+      ctx.font = '600 ' + Math.min(Math.floor(cs * 0.6), 22) + 'px system-ui, sans-serif';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      for (let r = 0; r < p.regionCount; r++) {
-        if (State.filledR[r]) continue;
-        const ce = p.centroids[r];
-        if (cs * Math.sqrt(ce.size) < 16) continue;          // too small on screen
-        const cxp = v.ox + ce.x * cs + cs / 2, cyp = v.oy + ce.y * cs + cs / 2;
-        if (cxp < -cs || cyp < -cs || cxp > vw + cs || cyp > vh + cs) continue;
-        ctx.fillStyle = p.regionColor[r] === State.selected ? '#e8590c' : '#9aa2ad';
-        ctx.fillText(p.regionColor[r], cxp, cyp);
+      for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+          const i = y * p.w + x, rid = p.region[i]; if (rid < 0 || State.filledR[rid]) continue;
+          const ce = p.centroids[rid];
+          if (ce.x !== x || ce.y !== y) continue;            // draw once, at the region's centroid cell
+          if (cs * Math.sqrt(ce.size) < 13) continue;
+          ctx.fillStyle = p.regionColor[rid] === State.selected ? '#e8590c' : '#9aa2ad';
+          ctx.fillText(p.regionColor[rid], v.ox + x * cs + cs / 2, v.oy + y * cs + cs / 2);
+        }
       }
     }
     drawAnims(cs);

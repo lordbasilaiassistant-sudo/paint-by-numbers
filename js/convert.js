@@ -254,10 +254,10 @@ window.PBN = window.PBN || {};
       if (!changed) break;
     }
 
-    // Numbered units are BOUNDED TILES, not whole connected blobs — so a large
-    // colour area is many cells to fill one-by-one (real paint-by-number), not
-    // a single bucket-fill. Each (tile, colour) pair becomes one numbered cell.
-    const bs = opts.blockSize || 3;
+    // Each grid CELL is its own numbered unit: one cell = one number = one tap
+    // (true paint-by-number). blockSize 1 means no grouping, so a tap never
+    // fills more than the single cell under the finger.
+    const bs = opts.blockSize || 1;
     const bw = Math.ceil(w / bs);
     let maxC = 0; for (let i = 0; i < N; i++) if (col[i] > maxC) maxC = col[i];
     const stride = maxC + 1;

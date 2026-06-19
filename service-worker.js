@@ -1,6 +1,6 @@
 /* service-worker.js — offline support, network-first so updates always land.
  * Bump CACHE to force eviction of old assets. */
-const CACHE = 'pbn-v6';
+const CACHE = 'pbn-v7';
 const ASSETS = [
   './',
   './index.html',
