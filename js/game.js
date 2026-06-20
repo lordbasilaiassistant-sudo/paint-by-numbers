@@ -501,8 +501,14 @@
     zoomAt(e.clientX, e.clientY, step);
     clampView(); requestRender();
   }, { passive: false });
+  // Double-tap-to-zoom — only in Move (hand) mode, where taps aren't painting.
+  // In Brush mode every tap fills a tile, so a second quick tap must NEVER zoom
+  // (that's what made colouring feel unreliable). Pinch + wheel + Fit still zoom
+  // in both modes, so nothing is lost.
   let lastTapTime = 0, lastTapPt = null;
   canvas.addEventListener('pointerup', (e) => {
+    if (State.mode !== 'hand') { lastTapTime = 0; return; }
+    if (moved) { lastTapTime = 0; return; }   // a pan, not a tap
     const now = performance.now();
     if (now - lastTapTime < 300 && lastTapPt && Math.hypot(e.clientX - lastTapPt.x, e.clientY - lastTapPt.y) < 25) {
       const target = State.view.scale < State._maxScale * 0.5 ? Math.min(State._maxScale, State.view.scale * 2.6) : State._fit;
@@ -518,7 +524,7 @@
   document.getElementById('mode-btn').addEventListener('click', () => {
     State.mode = State.mode === 'brush' ? 'hand' : 'brush';
     document.getElementById('mode-btn').textContent = State.mode === 'brush' ? '🖌️' : '✋';
-    toast(State.mode === 'brush' ? 'Brush: drag to paint' : 'Move: drag to pan');
+    toast(State.mode === 'brush' ? 'Brush: tap or drag to paint' : 'Move: drag to pan · double-tap to zoom');
   });
   document.getElementById('reset-btn').addEventListener('click', () => {
     if (!State.puzzle || !confirm('Clear your progress on this picture?')) return;
